@@ -1,0 +1,4 @@
+/* Custom styles that we can't easily achieve with Tailwind */
+.fade-transition {
+  transition: opacity 0.5s ease-in-out;
+}

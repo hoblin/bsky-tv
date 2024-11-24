@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BskyTV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles that we can't easily achieve with Tailwind */
+    .fade-transition {
+      transition: opacity 0.5s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-black min-h-screen">
+  <div id="app" class="container mx-auto p-4">
+    <div id="image-container" class="flex flex-wrap justify-center gap-4">
+      <!-- Images will be appended here -->
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
