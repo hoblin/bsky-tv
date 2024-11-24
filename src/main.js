@@ -13,14 +13,55 @@ const IMAGE_EMBED_TYPE = "app.bsky.embed.images";
 const imageContainer = document.getElementById("image-container");
 
 // Display functions
-const createImageElement = (post) => {
-  const { images, text } = post;
+const createImageElement = (postData) => {
+  const { blockData, commit, images } = postData;
+  const userDid = commit.get("repo");
 
-  // Create elements for all images in the post
+  // Extract labels
+  const labels = blockData.labels?.values?.map((label) => label.val) || [];
+
   return images.map((image) => {
     const wrapper = document.createElement("div");
-    wrapper.className = "w-64 m-4";
+    wrapper.className = "w-64 m-4 bg-gray-900 rounded-lg overflow-hidden";
 
+    // Author section
+    const authorSection = document.createElement("div");
+    authorSection.className = "p-3 flex items-center";
+
+    const authorLink = document.createElement("a");
+    authorLink.href = `https://bsky.app/profile/${userDid}`;
+    authorLink.target = "_blank";
+    authorLink.className = "text-blue-400 hover:text-blue-300";
+    authorLink.textContent =
+      blockData.author?.displayName || blockData.author?.handle || userDid;
+    authorSection.appendChild(authorLink);
+
+    // Timestamp
+    const timestamp = document.createElement("span");
+    timestamp.className = "text-gray-500 text-xs ml-auto";
+    timestamp.textContent = new Date(blockData.createdAt).toLocaleString();
+    authorSection.appendChild(timestamp);
+
+    wrapper.appendChild(authorSection);
+
+    // Labels section (if any)
+    if (labels.length > 0) {
+      console.log("labels", labels);
+      const labelsSection = document.createElement("div");
+      labelsSection.className = "px-3 -mt-1 mb-2 flex flex-wrap gap-1";
+
+      labels.forEach((label) => {
+        const labelElement = document.createElement("span");
+        labelElement.className =
+          "text-xs px-2 py-1 rounded-full bg-red-500 text-white";
+        labelElement.textContent = label;
+        labelsSection.appendChild(labelElement);
+      });
+
+      wrapper.appendChild(labelsSection);
+    }
+
+    // Image section
     const link = document.createElement("a");
     link.href = image.fullsize;
     link.target = "_blank";
@@ -28,36 +69,41 @@ const createImageElement = (post) => {
 
     const img = document.createElement("img");
     img.src = image.thumbnail;
-    img.alt = image.alt || text;
-    img.className =
-      "w-full h-64 object-cover rounded-lg shadow-lg fade-transition";
+    img.alt = image.alt || blockData.text;
+    img.className = "w-full h-64 object-cover fade-transition";
 
     link.appendChild(img);
     wrapper.appendChild(link);
 
-    if (text) {
+    // Text section
+    if (blockData.text) {
+      const textSection = document.createElement("div");
+      textSection.className = "p-3";
+
       const caption = document.createElement("p");
-      caption.className = "text-white mt-2 text-sm truncate";
-      caption.title = text;
-      caption.textContent = text;
-      wrapper.appendChild(caption);
+      caption.className = "text-white text-sm line-clamp-3";
+      caption.title = blockData.text;
+      caption.textContent = blockData.text;
+      textSection.appendChild(caption);
+
+      wrapper.appendChild(textSection);
     }
 
     return wrapper;
   });
 };
 
-const updateDisplay = (post) => {
-  const imageElements = createImageElement(post);
+const updateDisplay = (postData) => {
+  const imageElements = createImageElement(postData);
   imageElements.forEach((element) => {
     imageContainer.appendChild(element);
   });
 };
 
 // Process posts handler - can be replaced with any handling logic
-const handlePost = (post) => {
-  updateDisplay(post);
-  console.log("Post with images:", post);
+const handlePost = (postData) => {
+  updateDisplay(postData);
+  // console.log("Post with images:", postData);
 };
 
 // Image processing functions
@@ -73,9 +119,10 @@ const buildImageUrls = (userDid, cid) => ({
   fullsize: `https://cdn.bsky.app/img/feed_fullsize/plain/${userDid}/${cid}@jpeg`,
 });
 
-const processImage = (img, userDid) => {
+const processImage = (img, commit) => {
   try {
     const cid = decodeCID(img.image.ref.value);
+    const userDid = commit.get("repo");
     return {
       alt: img.alt,
       ...buildImageUrls(userDid, cid),
@@ -88,7 +135,7 @@ const processImage = (img, userDid) => {
 };
 
 // Block processing
-const processBlock = async (block, userDid) => {
+const processBlock = async (block, commit) => {
   const blockData = decode(block.bytes);
 
   if (
@@ -99,7 +146,7 @@ const processBlock = async (block, userDid) => {
   }
 
   const images = blockData.embed.images
-    .map((img) => processImage(img, userDid))
+    .map((img) => processImage(img, commit))
     .filter(Boolean);
 
   if (images.length === 0) {
@@ -107,7 +154,9 @@ const processBlock = async (block, userDid) => {
   }
 
   return {
-    text: blockData.text,
+    block,
+    blockData,
+    commit,
     images,
   };
 };
@@ -127,10 +176,9 @@ const initWebSocket = () => {
       if (!blocks?.length) return;
 
       const reader = await CarReader.fromBytes(blocks);
-      const userDid = commit.get("repo");
 
       for await (const block of reader.blocks()) {
-        const post = await processBlock(block, userDid);
+        const post = await processBlock(block, commit);
         if (post) {
           handlePost(post);
         }
