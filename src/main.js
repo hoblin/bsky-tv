@@ -14,11 +14,20 @@ const imageContainer = document.getElementById("image-container");
 
 // Consent management
 const CONSENT_KEY = "bsky-tv-consent";
+const CONSENT_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 const SAFE_REDIRECT = "https://youtu.be/dQw4w9WgXcQ"; // 😈
 
+const isConsentValid = () => {
+  const consentTimestamp = localStorage.getItem(CONSENT_KEY);
+  if (!consentTimestamp) return false;
+
+  const expirationTime = parseInt(consentTimestamp) + CONSENT_DURATION;
+  return Date.now() < expirationTime;
+};
+
 const init = () => {
-  // Check if user already consented
-  if (localStorage.getItem(CONSENT_KEY) === "true") {
+  // Check if user already consented and consent hasn't expired
+  if (isConsentValid()) {
     initWebSocket();
     return;
   }
@@ -28,7 +37,7 @@ const init = () => {
   document.body.classList.add("no-scroll");
 
   document.getElementById("accept-consent").addEventListener("click", () => {
-    localStorage.setItem(CONSENT_KEY, "true");
+    localStorage.setItem(CONSENT_KEY, Date.now().toString());
     document.getElementById("consent-modal").classList.add("hidden");
     document.body.classList.remove("no-scroll");
     initWebSocket();
