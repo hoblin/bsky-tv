@@ -12,6 +12,33 @@ const IMAGE_EMBED_TYPE = "app.bsky.embed.images";
 // DOM Elements
 const imageContainer = document.getElementById("image-container");
 
+// Consent management
+const CONSENT_KEY = "bsky-tv-consent";
+const SAFE_REDIRECT = "https://youtu.be/dQw4w9WgXcQ"; // 😈
+
+const init = () => {
+  // Check if user already consented
+  if (localStorage.getItem(CONSENT_KEY) === "true") {
+    initWebSocket();
+    return;
+  }
+
+  // Show consent modal and handle buttons
+  document.getElementById("consent-modal").classList.remove("hidden");
+  document.body.classList.add("no-scroll");
+
+  document.getElementById("accept-consent").addEventListener("click", () => {
+    localStorage.setItem(CONSENT_KEY, "true");
+    document.getElementById("consent-modal").classList.add("hidden");
+    document.body.classList.remove("no-scroll");
+    initWebSocket();
+  });
+
+  document.getElementById("reject-consent").addEventListener("click", () => {
+    window.location.href = SAFE_REDIRECT;
+  });
+};
+
 // Display functions
 const createImageElement = (postData) => {
   const { blockData, commit, images } = postData;
@@ -195,10 +222,5 @@ const initWebSocket = () => {
   return ws;
 };
 
-// Initialize the connection
-const ws = initWebSocket();
-
-// Optional: Add connection management
-export const disconnect = () => {
-  ws.close();
-};
+// Initialize the app
+init();

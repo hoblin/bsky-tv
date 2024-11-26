@@ -11,10 +11,40 @@
     .fade-transition {
       transition: opacity 0.5s ease-in-out;
     }
+
+    /* Prevent scroll when modal is open */
+    .no-scroll {
+      overflow: hidden;
+    }
+
+    /* Ensure modal is on top */
+    .consent-modal {
+      z-index: 50;
+    }
   </style>
 </head>
 
 <body class="bg-black min-h-screen">
+  <!-- Consent Modal -->
+  <div id="consent-modal"
+    class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center consent-modal hidden">
+    <div class="max-w-lg p-8 bg-gray-900 rounded-lg text-white text-center">
+      <h2 class="text-2xl font-bold mb-4">⚠️ Content Warning ⚠️</h2>
+      <p class="mb-6">This is an unfiltered feed of images from Bluesky social network.</p>
+      <p class="mb-6 text-xl">You WILL see a lot of penises 🤪</p>
+      <p class="mb-8">By continuing, you confirm that you are of legal age and understand that you may encounter adult
+        content.</p>
+      <div class="flex gap-4 justify-center">
+        <button id="accept-consent" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+          I understand, let me in!
+        </button>
+        <button id="reject-consent" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg">
+          Take me to safety
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="app" class="container mx-auto p-4">
     <div id="image-container" class="flex flex-wrap justify-center gap-4">
       <!-- Images will be appended here -->
